@@ -125,6 +125,7 @@ services:
       - ${ARRPATH}Radarr/movies:/data/Movies
       - ${ARRPATH}Sonarr/tvshows:/data/TVShows
       - ${ARRPATH}Lidarr/music:/data/Music
+      - ${HOMEVIDS}:/data/media/homevideos:ro
     env_file:
       - '.env'
     restart: unless-stopped
