@@ -79,7 +79,7 @@ services:
     volumes:
       - ${ARRPATH}Lidarr/config:/config
       - ${ARRPATH}Lidarr/music:/data/musicfolder
-      - ${ARRPATH}Radarr/backup:/data/Backup
+      - ${ARRPATH}Lidarr/backup:/data/Backup
       - ${ARRPATH}Downloads:/downloads
     ports:
       - 8686:8686
