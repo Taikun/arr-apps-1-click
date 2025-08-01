@@ -25,9 +25,10 @@ gluetun:
       - SERVER_COUNTRIES=${SERVER_COUNTRIES}
       - TZ=${TZ}
       - VPN_TYPE=openvpn
-      - DNS_ADDRESS=192.168.1.3,192.168.1.13
+      - DNS_ADDRESS= # Tu DNS primario (Adguard, Cloudflare, etc.)
+      - DNS_ADDRESS= # Tu DNS secundario (Adguard, Cloudflare, etc.)
       - DOT=off
-      - FIREWALL_OUTBOUND_SUBNETS=192.168.1.0/24   
+      - FIREWALL_OUTBOUND_SUBNETS= # Tus redes locales   
       
     restart: unless-stopped
     env_file:
