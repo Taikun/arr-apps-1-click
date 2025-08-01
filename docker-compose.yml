@@ -1,4 +1,62 @@
-services:       
+services:
+
+ ██████╗ ██╗     ██╗   ██╗███████╗████████╗██╗   ██╗███╗   ██╗
+██╔════╝ ██║     ██║   ██║██╔════╝╚══██╔══╝██║   ██║████╗  ██║
+██║  ███╗██║     ██║   ██║█████╗     ██║   ██║   ██║██╔██╗ ██║
+██║   ██║██║     ██║   ██║██╔══╝     ██║   ██║   ██║██║╚██╗██║
+╚██████╔╝███████╗╚██████╔╝███████╗   ██║   ╚██████╔╝██║ ╚████║
+ ╚═════╝ ╚══════╝ ╚═════╝ ╚══════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═══╝
+gluetun:
+    image: qmcgaw/gluetun
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    ports:
+      - 8080:8080  # qBittorrent
+      - 9696:9696  # Prowlarr
+      - 7878:7878  # Radarr
+      - 8686:8686  # Lidarr
+    environment:
+      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER}
+      - OPENVPN_USER=${OPENVPN_USER}
+      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
+      - SERVER_COUNTRIES=${SERVER_COUNTRIES}
+      - TZ=${TZ}
+      - VPN_TYPE=openvpn
+      - DNS_ADDRESS=192.168.1.3,192.168.1.13
+      - DOT=off
+      - FIREWALL_OUTBOUND_SUBNETS=192.168.1.0/24   
+      
+    restart: unless-stopped
+    env_file:
+      - '.env'
+
+#  ██████╗ ██████╗ ██╗████████╗████████╗ ██████╗ ██████╗ ██████╗ ███████╗███╗   ██╗████████╗
+# ██╔═══██╗██╔══██╗██║╚══██╔══╝╚══██╔══╝██╔═══██╗██╔══██╗██╔══██╗██╔════╝████╗  ██║╚══██╔══╝
+# ██║   ██║██████╔╝██║   ██║      ██║   ██║   ██║██████╔╝██████╔╝█████╗  ██╔██╗ ██║   ██║   
+# ██║▄▄ ██║██╔══██╗██║   ██║      ██║   ██║   ██║██╔══██╗██╔══██╗██╔══╝  ██║╚██╗██║   ██║   
+# ╚██████╔╝██████╔╝██║   ██║      ██║   ╚██████╔╝██║  ██║██║  ██║███████╗██║ ╚████║   ██║   
+#  ╚══▀▀═╝ ╚═════╝ ╚═╝   ╚═╝      ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝                                                                                           
+  qbittorrent:
+    image: linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    network_mode: service:gluetun
+    restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+    volumes:
+      - ${ARRPATH}qbittorrent/config:/config
+      - ${ARRPATH}Downloads:/downloads
+    environment:
+      - WEBUI_PORT=8080
+      - TORRENTING_PORT=6881
+    healthcheck:
+      start_period: 15s
+    env_file:
+      - '.env'
+
 
 # ██████╗ ██████╗  ██████╗ ██╗    ██╗██╗      █████╗ ██████╗ ██████╗ 
 # ██╔══██╗██╔══██╗██╔═══██╗██║    ██║██║     ██╔══██╗██╔══██╗██╔══██╗
@@ -6,28 +64,65 @@ services:
 # ██╔═══╝ ██╔══██╗██║   ██║██║███╗██║██║     ██╔══██║██╔══██╗██╔══██╗
 # ██║     ██║  ██║╚██████╔╝╚███╔███╔╝███████╗██║  ██║██║  ██║██║  ██║
 # ╚═╝     ╚═╝  ╚═╝ ╚═════╝  ╚══╝╚══╝ ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═
-                              
   prowlarr:
     image: linuxserver/prowlarr:latest
     container_name: prowlarr
-    hostname: prowlarr
+    network_mode: service:gluetun
+    depends_on:
+      - gluetun
     volumes:
       - ${ARRPATH}Prowlarr/config:/config
       - ${ARRPATH}Prowlarr/backup:/data/Backup
       - ${ARRPATH}Downloads:/downloads
-    ports:
-      - 9696:9696
-    restart: unless-stopped
     env_file:
       - '.env'
-      
+
+# ██████╗  █████╗ ██████╗  █████╗ ██████╗ ██████╗ 
+# ██╔══██╗██╔══██╗██╔══██╗██╔══██╗██╔══██╗██╔══██╗
+# ██████╔╝███████║██║  ██║███████║██████╔╝██████╔╝
+# ██╔══██╗██╔══██║██║  ██║██╔══██║██╔══██╗██╔══██╗
+# ██║  ██║██║  ██║██████╔╝██║  ██║██║  ██║██║  ██║
+# ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝    
+  radarr:
+    image: linuxserver/radarr:latest
+    container_name: radarr
+    network_mode: service:gluetun
+    depends_on:
+      - gluetun
+    volumes:
+      - ${ARRPATH}Radarr/config:/config
+      - ${ARRPATH}Radarr/movies:/data/movies
+      - ${ARRPATH}Radarr/backup:/data/Backup
+      - ${ARRPATH}Downloads:/downloads
+    env_file:
+      - '.env'
+
+# ██╗     ██╗██████╗  █████╗ ██████╗ ██████╗ 
+# ██║     ██║██╔══██╗██╔══██╗██╔══██╗██╔══██╗
+# ██║     ██║██║  ██║███████║██████╔╝██████╔╝
+# ██║     ██║██║  ██║██╔══██║██╔══██╗██╔══██╗
+# ███████╗██║██████╔╝██║  ██║██║  ██║██║  ██║
+# ╚══════╝╚═╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝
+  lidarr:
+    image: linuxserver/lidarr:latest
+    container_name: lidarr
+    network_mode: service:gluetun
+    depends_on:
+      - gluetun
+    volumes:
+      - ${ARRPATH}Lidarr/config:/config
+      - ${ARRPATH}Lidarr/music:/data/musicfolder
+      - ${ARRPATH}Lidarr/backup:/data/Backup
+      - ${ARRPATH}Downloads:/downloads
+    env_file:
+      - '.env'
+
 # ███████╗ ██████╗ ███╗   ██╗ █████╗ ██████╗ ██████╗ 
 # ██╔════╝██╔═══██╗████╗  ██║██╔══██╗██╔══██╗██╔══██╗
 # ███████╗██║   ██║██╔██╗ ██║███████║██████╔╝██████╔╝
 # ╚════██║██║   ██║██║╚██╗██║██╔══██║██╔══██╗██╔══██╗
 # ███████║╚██████╔╝██║ ╚████║██║  ██║██║  ██║██║  ██║
-# ╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝                                                 
-      
+# ╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝      
   sonarr:
     image: linuxserver/sonarr:latest
     container_name: sonarr
@@ -42,58 +137,12 @@ services:
     restart: unless-stopped
     env_file:
       - '.env'
-      
-# ██████╗  █████╗ ██████╗  █████╗ ██████╗ ██████╗ 
-# ██╔══██╗██╔══██╗██╔══██╗██╔══██╗██╔══██╗██╔══██╗
-# ██████╔╝███████║██║  ██║███████║██████╔╝██████╔╝
-# ██╔══██╗██╔══██║██║  ██║██╔══██║██╔══██╗██╔══██╗
-# ██║  ██║██║  ██║██████╔╝██║  ██║██║  ██║██║  ██║
-# ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝                                              
-
-  radarr:
-    image: linuxserver/radarr:latest
-    container_name: radarr
-    hostname: radarr
-    volumes:
-      - ${ARRPATH}Radarr/config:/config
-      - ${ARRPATH}Radarr/movies:/data/movies
-      - ${ARRPATH}Radarr/backup:/data/Backup
-      - ${ARRPATH}Downloads:/downloads
-    ports:
-      - 7878:7878
-    restart: unless-stopped
-    env_file:
-      - '.env'
-      
-# ██╗     ██╗██████╗  █████╗ ██████╗ ██████╗ 
-# ██║     ██║██╔══██╗██╔══██╗██╔══██╗██╔══██╗
-# ██║     ██║██║  ██║███████║██████╔╝██████╔╝
-# ██║     ██║██║  ██║██╔══██║██╔══██╗██╔══██╗
-# ███████╗██║██████╔╝██║  ██║██║  ██║██║  ██║
-# ╚══════╝╚═╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝
-                                             
-  lidarr:
-    image: linuxserver/lidarr:latest
-    container_name: lidarr
-    hostname: lidarr
-    volumes:
-      - ${ARRPATH}Lidarr/config:/config
-      - ${ARRPATH}Lidarr/music:/data/musicfolder
-      - ${ARRPATH}Lidarr/backup:/data/Backup
-      - ${ARRPATH}Downloads:/downloads
-    ports:
-      - 8686:8686
-    restart: unless-stopped
-    env_file:
-      - '.env'
-      
 # ██╗  ██╗ ██████╗ ███╗   ███╗ █████╗ ██████╗ ██████╗ 
 # ██║  ██║██╔═══██╗████╗ ████║██╔══██╗██╔══██╗██╔══██╗
 # ███████║██║   ██║██╔████╔██║███████║██████╔╝██████╔╝
 # ██╔══██║██║   ██║██║╚██╔╝██║██╔══██║██╔══██╗██╔══██╗
 # ██║  ██║╚██████╔╝██║ ╚═╝ ██║██║  ██║██║  ██║██║  ██║
 # ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝
-        
   homarr:
     container_name: homarr
     image: ghcr.io/ajnart/homarr:latest
@@ -106,21 +155,19 @@ services:
       - '7575:7575'
     env_file:
       - '.env'
-
 #      ██╗███████╗██╗     ██╗  ██╗   ██╗███████╗██╗███╗   ██╗
 #      ██║██╔════╝██║     ██║  ╚██╗ ██╔╝██╔════╝██║████╗  ██║
 #      ██║█████╗  ██║     ██║   ╚████╔╝ █████╗  ██║██╔██╗ ██║
 # ██   ██║██╔══╝  ██║     ██║    ╚██╔╝  ██╔══╝  ██║██║╚██╗██║
 # ╚█████╔╝███████╗███████╗███████╗██║   ██║     ██║██║ ╚████║
 #  ╚════╝ ╚══════╝╚══════╝╚══════╝╚═╝   ╚═╝     ╚═╝╚═╝  ╚═══╝
-     
   jellyfin:
     image: linuxserver/jellyfin
     container_name: jellyfin
     ports:
-      - '8096:8096/tcp'   # Jellyfin web interface
-      - '7359:7359/udp'   # Network discovery
-      - '1900:1900/udp'   # DLNA port
+      - '8096:8096/tcp'
+      - '7359:7359/udp'
+      - '1900:1900/udp'
     volumes:
       - ${ARRPATH}Jellyfin/config:/config
       - ${ARRPATH}Radarr/movies:/data/Movies
@@ -131,33 +178,3 @@ services:
     env_file:
       - '.env'
     restart: unless-stopped
-          
-#  ██████╗ ██████╗ ██╗████████╗████████╗ ██████╗ ██████╗ ██████╗ ███████╗███╗   ██╗████████╗
-# ██╔═══██╗██╔══██╗██║╚══██╔══╝╚══██╔══╝██╔═══██╗██╔══██╗██╔══██╗██╔════╝████╗  ██║╚══██╔══╝
-# ██║   ██║██████╔╝██║   ██║      ██║   ██║   ██║██████╔╝██████╔╝█████╗  ██╔██╗ ██║   ██║   
-# ██║▄▄ ██║██╔══██╗██║   ██║      ██║   ██║   ██║██╔══██╗██╔══██╗██╔══╝  ██║╚██╗██║   ██║   
-# ╚██████╔╝██████╔╝██║   ██║      ██║   ╚██████╔╝██║  ██║██║  ██║███████╗██║ ╚████║   ██║   
-#  ╚══▀▀═╝ ╚═════╝ ╚═╝   ╚═╝      ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝                                                                                          
-                                                                                             
-  qbittorrent:
-    image: linuxserver/qbittorrent:latest
-    container_name: qbittorrent
-    hostname: qbittorrent
-    restart: unless-stopped
-    labels:
-      - "com.centurylinklabs.watchtower.enable=false"
-    volumes:
-      - ${ARRPATH}qbittorrent/config:/config
-      - ${ARRPATH}Downloads:/downloads
-    ports:
-      - 8080:8080
-      - 6881:6881
-      - 6881:6881/udp
-    environment:
-      - WEBUI_PORT=8080
-      - TORRENTING_PORT=6881
-    healthcheck:
-      start_period: 15s
-    env_file:
-      - '.env'
-
