@@ -1,155 +1,55 @@
-services:       
+services:
 
-# ██████╗ ██████╗  ██████╗ ██╗    ██╗██╗      █████╗ ██████╗ ██████╗ 
-# ██╔══██╗██╔══██╗██╔═══██╗██║    ██║██║     ██╔══██╗██╔══██╗██╔══██╗
-# ██████╔╝██████╔╝██║   ██║██║ █╗ ██║██║     ███████║██████╔╝██████╔╝
-# ██╔═══╝ ██╔══██╗██║   ██║██║███╗██║██║     ██╔══██║██╔══██╗██╔══██╗
-# ██║     ██║  ██║╚██████╔╝╚███╔███╔╝███████╗██║  ██║██║  ██║██║  ██║
-# ╚═╝     ╚═╝  ╚═╝ ╚═════╝  ╚══╝╚══╝ ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═
-                              
-  prowlarr:
-    image: linuxserver/prowlarr:latest
-    container_name: prowlarr
-    hostname: prowlarr
-    volumes:
-      - ${ARRPATH}Prowlarr/config:/config
-      - ${ARRPATH}Prowlarr/backup:/data/Backup
-      - ${ARRPATH}Downloads:/downloads
+  # ========================================
+  # =               GLUETUN                =
+  # ========================================
+  gluetun:
+    image: qmcgaw/gluetun
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
     ports:
-      - 9696:9696
+      - 8080:8080  # qBittorrent
+      - 9696:9696  # Prowlarr
+      - 7878:7878  # Radarr
+      - 9117:9117  # Jackett Web UI
+      - 5656:5656  # Kapowarr Web UI
+      - 8989:8989  # Sonarr
+    environment:
+      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER}
+      - OPENVPN_USER=${OPENVPN_USER}
+      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
+      - SERVER_COUNTRIES=${SERVER_COUNTRIES}
+      - TZ=${TZ}
+      - VPN_TYPE=openvpn
+      - DOT=off
+      - HEALTH_VPN_DURATION_INITIAL=120s
+      - FIREWALL_OUTBOUND_SUBNETS=192.168.1.0/24,192.168.2.0/24
+      # 👇 si no necesitas la API HTTP, NO la actives (evitas 401)
+      # - HTTP_CONTROL_SERVER=on
+      # - HTTP_CONTROL_SERVER_ADDRESS=:8000
     restart: unless-stopped
     env_file:
       - '.env'
+    # 👈 sin healthcheck personalizado: usa el nativo de la imagen
       
-# ███████╗ ██████╗ ███╗   ██╗ █████╗ ██████╗ ██████╗ 
-# ██╔════╝██╔═══██╗████╗  ██║██╔══██╗██╔══██╗██╔══██╗
-# ███████╗██║   ██║██╔██╗ ██║███████║██████╔╝██████╔╝
-# ╚════██║██║   ██║██║╚██╗██║██╔══██║██╔══██╗██╔══██╗
-# ███████║╚██████╔╝██║ ╚████║██║  ██║██║  ██║██║  ██║
-# ╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝                                                 
       
-  sonarr:
-    image: linuxserver/sonarr:latest
-    container_name: sonarr
-    hostname: sonarr
-    volumes:
-      - ${ARRPATH}Sonarr/config:/config
-      - ${ARRPATH}Sonarr/backup:/data/Backup
-      - ${ARRPATH}Sonarr/tvshows:/data/tvshows
-      - ${ARRPATH}Downloads:/downloads
-    ports:
-      - 8989:8989
-    restart: unless-stopped
-    env_file:
-      - '.env'
-      
-# ██████╗  █████╗ ██████╗  █████╗ ██████╗ ██████╗ 
-# ██╔══██╗██╔══██╗██╔══██╗██╔══██╗██╔══██╗██╔══██╗
-# ██████╔╝███████║██║  ██║███████║██████╔╝██████╔╝
-# ██╔══██╗██╔══██║██║  ██║██╔══██║██╔══██╗██╔══██╗
-# ██║  ██║██║  ██║██████╔╝██║  ██║██║  ██║██║  ██║
-# ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝                                              
-
-  radarr:
-    image: linuxserver/radarr:latest
-    container_name: radarr
-    hostname: radarr
-    volumes:
-      - ${ARRPATH}Radarr/config:/config
-      - ${ARRPATH}Radarr/movies:/data/movies
-      - ${ARRPATH}Radarr/backup:/data/Backup
-      - ${ARRPATH}Downloads:/downloads
-    ports:
-      - 7878:7878
-    restart: unless-stopped
-    env_file:
-      - '.env'
-      
-# ██╗     ██╗██████╗  █████╗ ██████╗ ██████╗ 
-# ██║     ██║██╔══██╗██╔══██╗██╔══██╗██╔══██╗
-# ██║     ██║██║  ██║███████║██████╔╝██████╔╝
-# ██║     ██║██║  ██║██╔══██║██╔══██╗██╔══██╗
-# ███████╗██║██████╔╝██║  ██║██║  ██║██║  ██║
-# ╚══════╝╚═╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝
-                                             
-  lidarr:
-    image: linuxserver/lidarr:latest
-    container_name: lidarr
-    hostname: lidarr
-    volumes:
-      - ${ARRPATH}Lidarr/config:/config
-      - ${ARRPATH}Lidarr/music:/data/musicfolder
-      - ${ARRPATH}Downloads:/downloads
-    ports:
-      - 8686:8686
-    restart: unless-stopped
-    env_file:
-      - '.env'
-      
-# ██╗  ██╗ ██████╗ ███╗   ███╗ █████╗ ██████╗ ██████╗ 
-# ██║  ██║██╔═══██╗████╗ ████║██╔══██╗██╔══██╗██╔══██╗
-# ███████║██║   ██║██╔████╔██║███████║██████╔╝██████╔╝
-# ██╔══██║██║   ██║██║╚██╔╝██║██╔══██║██╔══██╗██╔══██╗
-# ██║  ██║╚██████╔╝██║ ╚═╝ ██║██║  ██║██║  ██║██║  ██║
-# ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝
-        
-  homarr:
-    container_name: homarr
-    image: ghcr.io/ajnart/homarr:latest
-    restart: unless-stopped
-    volumes:
-      - ${ARRPATH}Homarr/configs:/app/data/configs
-      - ${ARRPATH}Homarr/icons:/app/public/icons
-      - ${ARRPATH}Homarr/data:/data
-    ports:
-      - '7575:7575'
-    env_file:
-      - '.env'
-
-#      ██╗███████╗██╗     ██╗  ██╗   ██╗███████╗██╗███╗   ██╗
-#      ██║██╔════╝██║     ██║  ╚██╗ ██╔╝██╔════╝██║████╗  ██║
-#      ██║█████╗  ██║     ██║   ╚████╔╝ █████╗  ██║██╔██╗ ██║
-# ██   ██║██╔══╝  ██║     ██║    ╚██╔╝  ██╔══╝  ██║██║╚██╗██║
-# ╚█████╔╝███████╗███████╗███████╗██║   ██║     ██║██║ ╚████║
-#  ╚════╝ ╚══════╝╚══════╝╚══════╝╚═╝   ╚═╝     ╚═╝╚═╝  ╚═══╝
-     
-  jellyfin:
-    image: linuxserver/jellyfin
-    container_name: jellyfin
-    ports:
-      - '8096:8096/tcp'   # Jellyfin web interface
-      - '7359:7359/udp'   # Network discovery
-      - '1900:1900/udp'   # DLNA port
-    volumes:
-      - ${ARRPATH}Jellyfin/config:/config
-      - ${ARRPATH}Radarr/movies:/data/Movies
-      - ${ARRPATH}Sonarr/tvshows:/data/TVShows
-      - ${ARRPATH}Lidarr/music:/data/Music
-    env_file:
-      - '.env'
-    restart: unless-stopped
-          
-#  ██████╗ ██████╗ ██╗████████╗████████╗ ██████╗ ██████╗ ██████╗ ███████╗███╗   ██╗████████╗
-# ██╔═══██╗██╔══██╗██║╚══██╔══╝╚══██╔══╝██╔═══██╗██╔══██╗██╔══██╗██╔════╝████╗  ██║╚══██╔══╝
-# ██║   ██║██████╔╝██║   ██║      ██║   ██║   ██║██████╔╝██████╔╝█████╗  ██╔██╗ ██║   ██║   
-# ██║▄▄ ██║██╔══██╗██║   ██║      ██║   ██║   ██║██╔══██╗██╔══██╗██╔══╝  ██║╚██╗██║   ██║   
-# ╚██████╔╝██████╔╝██║   ██║      ██║   ╚██████╔╝██║  ██║██║  ██║███████╗██║ ╚████║   ██║   
-#  ╚══▀▀═╝ ╚═════╝ ╚═╝   ╚═╝      ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝                                                                                          
-                                                                                             
+  # ========================================
+  # =             QBITTORRENT              =
+  # ========================================
   qbittorrent:
     image: linuxserver/qbittorrent:latest
     container_name: qbittorrent
-    hostname: qbittorrent
+    network_mode: service:gluetun
     restart: unless-stopped
-    labels:
-      - "com.centurylinklabs.watchtower.enable=false"
+    depends_on:
+      gluetun:
+        condition: service_healthy
     volumes:
       - ${ARRPATH}qbittorrent/config:/config
       - ${ARRPATH}Downloads:/downloads
-    ports:
-      - 8080:8080
-      - 6881:6881
-      - 6881:6881/udp
     environment:
       - WEBUI_PORT=8080
       - TORRENTING_PORT=6881
@@ -157,4 +57,668 @@ services:
       start_period: 15s
     env_file:
       - '.env'
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
 
+  # ========================================
+  # =               JACKETT                =
+  # ========================================
+  jackett:
+    image: linuxserver/jackett:latest
+    container_name: jackett
+    network_mode: service:gluetun
+    restart: unless-stopped
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${ARRPATH}Jackett/config:/config
+      - ${ARRPATH}Downloads:/downloads
+    env_file:
+      - '.env'
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # ========================================
+  # =               PROWLARR               =
+  # ========================================
+  prowlarr:
+    image: linuxserver/prowlarr:latest
+    container_name: prowlarr
+    network_mode: service:gluetun
+    restart: unless-stopped
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    volumes:
+      - ${ARRPATH}Prowlarr/config:/config
+      - ${ARRPATH}Prowlarr/backup:/data/Backup
+      - ${ARRPATH}Downloads:/downloads
+    env_file:
+      - '.env'
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # ========================================
+  # =                RADARR                =
+  # ========================================
+  radarr:
+    image: linuxserver/radarr:latest
+    container_name: radarr
+    network_mode: service:gluetun
+    restart: unless-stopped
+    depends_on:
+      - gluetun
+    volumes:
+      - ${RADARR_PATH}/config:/config
+      - ${RADARR_PATH}/movies:/data/movies
+      - ${RADARR_PATH}/backup:/data/Backup
+      - ${ARRPATH}Downloads:/downloads
+    env_file:
+      - '.env'
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # ========================================
+  # =                LIDARR                =
+  # ========================================
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    ports:
+      - "8686:8686"
+    environment:
+      - PUID=${PUID}         # p.ej. 1000
+      - PGID=${PGID}         # p.ej. 1000
+      - TZ=${TZ}             # p.ej. Europe/Madrid
+      - UMASK=${UMASK:-002}
+    volumes:
+      - ${ARRPATH}Lidarr/config:/config
+      - ${ARRPATH}Lidarr/music:/music
+      - ${ARRPATH}Downloads:/downloads
+      # (opcional) que el contenedor vea la hora del host
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+    env_file:
+      - ".env"
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # ========================================
+  # =              NAVIDROME               =
+  # ========================================
+  navidrome:
+    image: deluan/navidrome:latest
+    container_name: navidrome
+    user: "1000:1000"
+    ports:
+      - 4533:4533
+    environment:
+      - ND_LOGLEVEL=info
+      - ND_SCANINTERVAL=5m
+      - ND_MUSICFOLDER=/music
+    volumes:
+      - ${LIDARR_PATH}/music:/music
+      - ${ARRPATH}navidrome/data:/data
+    restart: unless-stopped
+
+  # ========================================
+  # =                SONARR                =
+  # ========================================
+  sonarr:
+    image: linuxserver/sonarr:latest
+    container_name: sonarr
+    network_mode: "service:gluetun" 
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    volumes:
+      - ${SONARR_PATH}/config:/config
+      - ${SONARR_PATH}/backup:/data/Backup
+      - ${SONARR_PATH}/tvshows:/data/tvshows
+      - ${ARRPATH}Downloads:/downloads
+    restart: unless-stopped
+    env_file:
+      - '.env'
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # ========================================
+  # =                BAZARR                =
+  # ========================================
+  bazarr:
+    image: linuxserver/bazarr:latest
+    container_name: bazarr
+    restart: unless-stopped
+    ports:
+      - 6767:6767
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${ARRPATH}Bazarr/config:/config
+      - ${RADARR_PATH}/movies:/movies
+      - ${SONARR_PATH}/tvshows:/tv
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # ========================================
+  # =               SABNZBD                =
+  # ========================================
+  sabnzbd:
+    image: linuxserver/sabnzbd:latest
+    container_name: sabnzbd
+    restart: unless-stopped
+    network_mode: bridge  # ya no usa Gluetun
+    ports:
+      - "8085:8085"  # Web UI
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - SABNZBD_BASIC_USER=${SABNZBD_BASIC_USER}
+      - SABNZBD_BASIC_PASS=${SABNZBD_BASIC_PASS}
+    volumes:
+      - ${ARRPATH}SABnzbd/config:/config
+      - ${ARRPATH}Downloads:/downloads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "--user", "${SABNZBD_BASIC_USER}:${SABNZBD_BASIC_PASS}", "http://localhost:8085/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # ========================================
+  # =               KAPOWARR               =
+  # ========================================
+  kapowarr:
+    image: mrcas/kapowarr:latest
+    container_name: kapowarr
+    restart: unless-stopped
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    volumes:
+      - ${ARRPATH}Kapowarr/config:/app/db
+      - ${ARRPATH}Downloads:/app/temp_downloads
+      - ${ARRPATH}Kapowarr/comics:/comics-1
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    env_file:
+      - '.env'
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+  
+  # ========================================
+  # =                TDARR                 =
+  # ========================================
+  tdarr:
+    image: ghcr.io/haveagitgat/tdarr:latest
+    container_name: tdarr
+    restart: unless-stopped
+    ports:
+      - "8265:8265"   # Web UI
+      - "8266:8266"   # API (por si conectas más nodos)
+    environment:
+      - TZ=${TZ}
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - UMASK_SET=002
+      - serverIP=192.168.1.9
+      - serverPort=8266
+      - webUIPort=8265
+    volumes:
+      - ${ARRPATH}Tdarr/server:/app/server
+      - ${ARRPATH}Tdarr/configs:/app/configs
+      - ${ARRPATH}Tdarr/configs/tdarr/transcode_cache:/temp
+      - ${ARRPATH}Tdarr/logs:/app/logs
+      - ${RADARR_PATH}/movies:/media/movies
+      - ${SONARR_PATH}/tvshows:/media/tv
+      - ${LIDARR_PATH}/music:/media/music
+      - ${ARRPATH}Downloads:/media/downloads
+      - ${HOMEVIDS}:/media/homevideos
+    devices:
+    # Si usaras GPU más adelante puedes mapear aquí /dev/dri
+      - /dev/dri:/dev/dri
+    group_add:
+      - "109"   # GID render
+      - "44"    # GID video
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+
+  # ========================================
+  # =              HANDBRAKE               =
+  # ========================================
+  handbrake:
+    image: jlesage/handbrake:latest
+    container_name: handbrake
+    restart: unless-stopped
+    ports:
+      - "5800:5800"                           # WebUI: http://TU-IP:5800
+    # Mapea la iGPU (VAAPI)
+    devices:
+      - /dev/dri:/dev/dri
+    # Usa GIDs numéricos de tus grupos 'render' y 'video'
+    # Sustituye 109 y 44 por los tuyos: `getent group render` / `getent group video`
+    group_add:
+      - "109"                                 # GID del grupo 'render'  (ejemplo)
+      - "44"                                  # GID del grupo 'video'   (ejemplo)
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      # Si quieres también conversión automática por carpeta "watch":
+      - AUTOMATED_CONVERSION_ENABLE=1         # 1=ON, 0=OFF
+      - AUTOMATED_CONVERSION_PRESET=H.264 1080p30  # Cambia al preset que uses
+      - AUTOMATED_CONVERSION_FORMAT=mp4
+      - AUTOMATED_CONVERSION_KEEP_SOURCE=1    # Mantiene el original (lo que pedías)
+      - KEEP_APP_RUNNING=1                    # Deja el contenedor vivo tras terminar
+      # UI opcional más cómoda
+      - DISPLAY_WIDTH=1600
+      - DISPLAY_HEIGHT=900
+    volumes:
+      # Configuración de HandBrake
+      - ${ARRPATH}HandBrake/config:/config
+
+      # Tus librerías (solo lectura por seguridad; cambia a rw si quieres editar in-place)
+      - ${RADARR_PATH}/movies:/media/movies:ro
+      - ${SONARR_PATH}/tvshows:/media/tv:ro
+      - ${LIDARR_PATH}/music:/media/music:ro
+      - ${ARRPATH}Downloads:/media/downloads:ro
+
+      # Carpeta "watch" para dejar archivos a convertir automáticamente
+      - ${ARRPATH}Downloads/HandBrakeWatch:/watch
+
+      # Salida de los convertidos (también accesible por Jellyfin/Plex si apuntas aquí)
+      - ${ARRPATH}Downloads/HandBrakeOutput:/output
+
+  # ========================================
+  # =                DOZZLE                =
+  # ========================================
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    restart: unless-stopped
+    ports:
+      - "9999:8080"       # accede en http://TUIP:9999
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - DOZZLE_BASE=/     # base path, cámbialo si usas reverse proxy
+      - DOZZLE_LEVEL=info # nivel de log de Dozzle (info, debug, warn)
+      - DOZZLE_TAILSIZE=300 # cuántas líneas iniciales cargar
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  # ========================================
+  # =             RECOMENDARR              =
+  # ========================================
+  recomendarr:
+    image: tannermiddleton/recommendarr:latest
+    container_name: recomendarr
+    restart: unless-stopped
+    ports:
+      - "8050:3000"
+    volumes:
+      - ${ARRPATH}Recomendarr/config:/config
+      - ${ARRPATH}Recommendarr/data:/app/server/data  
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # ========================================
+  # =              JELLYSEERR              =
+  # ========================================
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    environment:
+      - PUID=${PUID}          # ID de usuario, normalmente 1000
+      - PGID=${PGID}          # ID de grupo, normalmente 1000
+      - TZ=${TZ}      # Ajusta tu zona horaria
+    volumes:
+      - ${ARRPATH}Jellyseerr/config:/app/config
+    ports:
+      - "5055:5055"           # Puerto de acceso web
+    restart: unless-stopped
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  # ========================================
+  # =              CLEANUPARR              =
+  # ========================================
+  cleanuparr:
+    image:  ghcr.io/cleanuparr/cleanuparr
+    container_name: cleanuparr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${ARRPATH}CleanUpArr/config:/config
+      - ${ARRPATH}Downloads:/downloads
+    ports:
+      - "11011:11011"  # Web UI
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # ========================================
+  # =               HUNTARR                =
+  # ========================================
+  huntarr:
+    image: huntarr/huntarr:latest 
+    container_name: huntarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    ports:
+      - "9705:9705"
+    volumes:
+      - ${RADARR_PATH}/movies:/movies
+      - ${SONARR_PATH}/tvshows:/tv
+      - ${ARRPATH}Downloads:/downloads
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # ========================================
+  # =               LINGARR                =
+  # ========================================
+  lingarr:
+    image: lingarr/lingarr:latest # Usa latest-arm64 si estás en ARM
+    container_name: lingarr
+    restart: unless-stopped
+    env_file:
+      - '.env'
+    depends_on:
+      - libretranslate
+    environment:
+      - ASPNETCORE_URLS=http://+:9876
+      - TRANSLATOR__BASE_URL=http://libretranslate:5000
+    ports:
+      - "9876:9876"
+    volumes:
+      - ${RADARR_PATH}/movies:/movies
+      - ${SONARR_PATH}/tvshows:/tv
+      - ${ARRPATH}Lingarr/config:/app/config
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    networks:
+      - lingarr
+
+  # ========================================
+  # =            LIBRETRANSLATE            =
+  # ========================================
+  libretranslate:
+    container_name: libretranslate
+    image: libretranslate/libretranslate:latest
+    restart: unless-stopped
+    environment:
+      - LT_LOAD_ONLY=en,es  # Idiomas inglés ↔ español
+    ports:
+      - 5000:5000
+    volumes:
+      - libretranslate_data:/home/libretranslate/.local/share/argos-translate
+    networks:
+      - lingarr
+    healthcheck:
+      test: ["CMD-SHELL", "./venv/bin/python scripts/healthcheck.py"]
+    user: "0:0"  # o prueba con "0:0" si no sabes el UID
+
+  # ========================================
+  # =             SOCKET-PROXY             =
+  # ========================================
+  socket-proxy:
+    image: ghcr.io/tecnativa/docker-socket-proxy:latest
+    container_name: socket-proxy
+    restart: unless-stopped
+    # Solo lectura del socket real
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      # === Permisos mínimos para Homarr ===
+      - CONTAINERS=1          # listar/inspeccionar contenedores
+      - POST=1                # ⛔ necesario si quieres start/stop/restart/remove desde Homarr
+      # (Opcional) extras habituales si vas a usar otras tools detrás del proxy:
+      - INFO=1
+      - IMAGES=1
+      - NETWORKS=1
+      - SYSTEM=1
+    ports:
+      - "127.0.0.1:2375:2375" # expón SOLO en loopback del host
+
+
+  # ========================================
+  # =                HOMARR                =
+  # ========================================
+  homarr:
+    container_name: homarr
+    image: ghcr.io/homarr-labs/homarr:latest 
+    depends_on:
+     - socket-proxy 
+    environment:
+      - SECRET_ENCRYPTION_KEY=${SECRET_ENCRYPTION_KEY}
+         # Homarr 1.0+ permite múltiples hosts vía estas vars (hostnames y puertos en el mismo orden)
+      - DOCKER_HOSTNAMES=socket-proxy
+      - DOCKER_PORTS=2375
+      # Si estás en una versión antigua de Homarr, usa (en su lugar):
+      # - DOCKER_HOST=socket-proxy
+      # - DOCKER_PORT=2375 
+    restart: unless-stopped
+    volumes:
+      - ${ARRPATH}Homarr/appdata:/appdata
+    ports:
+      - '7575:7575'
+    env_file:
+      - '.env'
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # ========================================
+  # =                METUBE                =
+  # ========================================
+  metube:
+    image: ghcr.io/alexta69/metube
+    container_name: metube
+    ports:
+      - 8083:8081
+    volumes:
+      - ${ARRPATH}Downloads:/downloads
+    restart: unless-stopped
+
+  # ========================================
+  # =               SPOTTUBE               =
+  # ========================================
+  spottube:
+    image: thewicklowwolf/spottube:latest
+    container_name: spottube
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - spotify_client_id=${SPOTTUBE_SPOTIFY_CLIENT_ID}
+      - spotify_client_secret=${SPOTTUBE_SPOTIFY_CLIENT_SECRET}
+      - thread_limit=1
+      - artist_track_selection=all
+    volumes:
+      - ${ARRPATH}Spottube/config:/spottube/config
+      - ${ARRPATH}Downloads:/spottube/downloads
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - 5005:5000
+    restart: unless-stopped
+
+  # ========================================
+  # =               JELLYFIN               =
+  # ========================================
+  jellyfin:
+    image: linuxserver/jellyfin
+    container_name: jellyfin
+    ports:
+      - '8096:8096/tcp'
+      - '7359:7359/udp'
+      - '1900:1900/udp'
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - "109"
+      - "44" 
+    volumes:
+      - ${ARRPATH}Jellyfin/config:/config
+      - ${RADARR_PATH}/movies:/data/Movies
+      - ${SONARR_PATH}/tvshows:/data/TVShows
+      - ${LIDARR_PATH}/music:/data/Music
+      - ${ARRPATH}Downloads:/downloads
+      - ${HOMEVIDS}:/data/media/homevideos:ro
+    env_file:
+      - '.env'
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    restart: unless-stopped
+
+  # ========================================
+  # =                 PLEX                 =
+  # ========================================
+  plex:
+    image: linuxserver/plex:latest
+    container_name: plex
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - VERSION=docker
+      - PLEX_CLAIM=${PLEX_CLAIM}
+    volumes:
+      - ${ARRPATH}Plex/config:/config
+      - ${RADARR_PATH}/movies:/data/Movies
+      - ${SONARR_PATH}/tvshows:/data/TVShows
+      - ${LIDARR_PATH}/music:/data/Music
+      - ${ARRPATH}Downloads:/downloads
+      - ${HOMEVIDS}:/data/media/homevideos:ro
+    devices:
+      - /dev/dri:/dev/dri  # Para transcodificación por hardware
+    group_add:
+      - "109"
+      - "44" 
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # ========================================
+  # =             FILEBROWSER              =
+  # ========================================
+  filebrowser:
+    image: filebrowser/filebrowser:latest
+    container_name: filebrowser
+    restart: unless-stopped
+    ports:
+      - 8081:80  # Web UI por HTTP
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${ARRPATH}Downloads:/srv/downloads
+      - ${SONARR_PATH}/tvshows:/srv/tvshows
+      - ${RADARR_PATH}/movies:/srv/movies
+      - ${LIDARR_PATH}/music:/srv/music
+      - ${ARRPATH}Plex/config:/srv/plexconfig
+      - ${ARRPATH}:/srv/arrroot  # acceso total si lo necesitas
+      - /appdata:/srv/appdata
+      - /mnt/homevideos:/srv/homevideos
+      - /mnt/backups:/srv/backups  
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # ========================================
+  # =               GLANCES                =
+  # ========================================
+  glances:
+    image: nicolargo/glances:latest
+    container_name: glances
+    restart: unless-stopped
+    pid: "host"
+    network_mode: "host"
+    environment:
+      - GLANCES_OPT=-w
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 61208:61208
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # ========================================
+  # =               DASHDOT                =
+  # ========================================
+  dashdot:
+    image: mauricenino/dashdot:latest
+    container_name: dashdot
+    restart: unless-stopped
+    ports:
+      - '3001:3001'
+    volumes:
+      - '/:/mnt/host:ro'
+    privileged: true
+    environment:
+      - DASHDOT_SHOW_HOST=true
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # ========================================
+  # =              DUPLICATI               =
+  # ========================================
+  duplicati:
+    image: lscr.io/linuxserver/duplicati
+    container_name: duplicati
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - SETTINGS_ENCRYPTION_KEY=${DUPLICATI_SETTINGS_ENCRYPTION_KEY}
+      - DUPLICATI__WEBSERVICE_PASSWORD=${DUPLICATI_WEBUI_PASSWORD}
+    volumes:
+      - /appdata/duplicati:/config
+      - /appdata:/appdata
+      - /media/Arr:/arrsource  # Donde están los datos que quieres respaldar
+      - ${SONARR_PATH}/config:/sonarr_config
+      - ${RADARR_PATH}/config:/radarr_config
+      - ${LIDARR_PATH}/config:/lidarr_config
+      - /mnt/backups:/backups  # Destino de backups (puede ser NFS, SMB, disco externo, etc.)
+    ports:
+      - 8200:8200
+
+  # ========================================
+  # =              WATCHTOWER              =
+  # ========================================
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true           # Elimina imágenes antiguas
+      - WATCHTOWER_POLL_INTERVAL=86400    # Comprueba una vez al día
+      - WATCHTOWER_LABEL_ENABLE=true      # Solo actualiza contenedores con etiqueta
+
+networks:
+  lingarr:
+    external: true
+volumes:
+  libretranslate_data:

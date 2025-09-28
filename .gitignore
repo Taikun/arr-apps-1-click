@@ -1,0 +1,5 @@
+# Ignore environment files with secrets
+.env
+
+# Keep the example env file tracked
+!.env.example
